@@ -19,12 +19,11 @@
 {
     [super viewDidLoad];
     MZGoogleStyleButton *button = [[MZGoogleStyleButton alloc] init];
-    button.frame = CGRectMake(0, 0, 100, 100);
+    button.frame = CGRectMake(0, 0, 200, 50);
     button.center = self.view.center;
-    button.layer.cornerRadius = 50;
+    button.layer.cornerRadius = 5;
     button.backgroundColor = [UIColor redColor];
     button.layerOpaque = 0.5;
-    button.layerColor = [UIColor blackColor];
     button.duration = 0.4;
     button.layer.shadowOpacity = 1.0;
     [self.view addSubview:button];

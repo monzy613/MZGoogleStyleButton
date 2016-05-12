@@ -9,10 +9,13 @@
 #import "MZGoogleStyleButton.h"
 @interface MZGoogleStyleButton ()
 @property (nonatomic, strong) CALayer *circleLayer;
+@property (nonatomic) BOOL isPreviousTouchInside;
+@property (nonatomic) BOOL isAnimationStop;
 @end
 
 @implementation MZGoogleStyleButton
 
+#pragma mark - initializers
 - (instancetype)initWithFrame:(CGRect)frame
 {
     self = [super initWithFrame:frame];
@@ -26,49 +29,133 @@
     return self;
 }
 
+- (instancetype)initWithDuration:(CGFloat)duration
+{
+    self = [super initWithFrame:CGRectZero];
+    if (self) {
+        [self.layer addSublayer:self.circleLayer];
+        self.layerOpaque = 0.6;
+        self.duration = duration;
+        self.layerColor = [UIColor whiteColor];
+        self.clipsToBounds = YES;
+    }
+    return self;
+}
+
+- (instancetype)initWithLayerOpaque:(CGFloat)layerOpaque
+{
+    self = [super initWithFrame:CGRectZero];
+    if (self) {
+        [self.layer addSublayer:self.circleLayer];
+        self.layerOpaque = layerOpaque;
+        self.duration = 0.3;
+        self.layerColor = [UIColor whiteColor];
+        self.clipsToBounds = YES;
+    }
+    return self;
+}
+
+- (instancetype)initWithLayerColor:(UIColor *)layerColor
+{
+    self = [super initWithFrame:CGRectZero];
+    if (self) {
+        [self.layer addSublayer:self.circleLayer];
+        self.layerOpaque = 0.6;
+        self.duration = 0.3;
+        self.layerColor = layerColor;
+        self.clipsToBounds = YES;
+    }
+    return self;
+}
+
+- (instancetype)initWithDuration:(CGFloat)duration
+                     layerOpaque:(CGFloat)layerOpaque
+                      layerColor:(UIColor *)layerColor
+{
+    self = [super initWithFrame:CGRectZero];
+    if (self) {
+        [self.layer addSublayer:self.circleLayer];
+        self.duration = duration;
+        self.layerOpaque = layerOpaque;
+        self.layerColor = layerColor;
+        self.clipsToBounds = YES;
+    }
+    return self;
+}
+
+#pragma mark - touch events
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     [super touchesBegan:touches withEvent:event];
-    self.circleLayer.opacity = self.layerOpaque;
-    UITouch *touch = touches.anyObject;
-    CGPoint touchPoint = [touch locationInView:self];
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
-    self.circleLayer.position = touchPoint;
-    [CATransaction commit];
-    [CATransaction setDisableActions:NO];
+    CGPoint touchPoint = [touches.anyObject locationInView:self];
     [self enlargeFromPoint: touchPoint];
+    self.isPreviousTouchInside = self.isTouchInside;
+}
+
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    [super touchesMoved:touches withEvent:event];
+    CGPoint touchPoint = [touches.anyObject locationInView:self];
+    if (self.isTouchInside && !self.isPreviousTouchInside) {
+        [self enlargeFromPoint:touchPoint];
+    } else if (!self.isTouchInside && self.isPreviousTouchInside){
+        [self endAnimation];
+    }
+    self.isPreviousTouchInside = self.isTouchInside;
 }
 
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     [super touchesEnded:touches withEvent:event];
-    [self endAnimation];
-}
-
-- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
-{
-    [super touchesCancelled:touches withEvent:event];
-    [self endAnimation];
+    if (![self isPointInView:[touches.anyObject locationInView:self] view:self]) {
+        NSLog(@"out");
+        [self endAnimation];
+    }
 }
 
 - (void)endAnimation
 {
-    [self.circleLayer removeAllAnimations];
+    self.isAnimationStop = YES;
     self.circleLayer.opacity = 0.0;
     self.circleLayer.transform = CATransform3DIdentity;
 }
 
 - (void)enlargeFromPoint:(CGPoint)point
 {
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    self.circleLayer.opacity = self.layerOpaque;
+    self.circleLayer.position = point;
+    [CATransaction commit];
+    [CATransaction setDisableActions:NO];
+
+
     CABasicAnimation *enlargeAnimation = [CABasicAnimation animation];
     enlargeAnimation.keyPath = @"transform";
     CGFloat radius = ceil([self radiusFromPoint:point]);
     enlargeAnimation.toValue = [NSValue valueWithCATransform3D:CATransform3DMakeScale(radius, radius, 1)];
     enlargeAnimation.duration = self.duration;
+    enlargeAnimation.delegate = self;
     enlargeAnimation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
-    [self.circleLayer addAnimation:enlargeAnimation forKey:@"googleLikeButtonAnimation"];
+    [self.circleLayer addAnimation:enlargeAnimation forKey: nil];
     self.circleLayer.transform = CATransform3DMakeScale(radius, radius, 1);
+}
+
+#pragma mark - calayer delegate
+- (void)animationDidStop:(CAAnimation *)anim finished:(BOOL)flag
+{
+    self.isAnimationStop = YES;
+    if (!self.isTouchInside) {
+        [self endAnimation];
+    }
+}
+
+#pragma mark - util methods
+- (BOOL)isPointInView:(CGPoint)point view:(UIView *)view
+{
+    return
+    (point.x <= CGRectGetWidth(view.bounds) && point.x >= 0) &&
+    (point.y <= CGRectGetHeight(view.bounds) && point.y >= 0);
 }
 
 - (CGFloat)radiusFromPoint:(CGPoint)point
@@ -90,6 +177,7 @@
     return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
 }
 
+#pragma mark - getters & setters
 - (CALayer *)circleLayer
 {
     if (!_circleLayer) {
