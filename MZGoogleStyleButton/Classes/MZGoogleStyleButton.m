@@ -108,7 +108,6 @@
 {
     [super touchesEnded:touches withEvent:event];
     if (![self isPointInView:[touches.anyObject locationInView:self] view:self]) {
-        NSLog(@"out");
         [self endAnimation];
     }
 }
