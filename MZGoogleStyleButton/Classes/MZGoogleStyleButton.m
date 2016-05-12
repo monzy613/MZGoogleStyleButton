@@ -10,7 +10,7 @@
 @interface MZGoogleStyleButton ()
 @property (nonatomic, strong) CALayer *circleLayer;
 @property (nonatomic) BOOL isPreviousTouchInside;
-@property (nonatomic) BOOL isAnimationStop;
+@property (nonatomic) BOOL animating;
 @end
 
 @implementation MZGoogleStyleButton
@@ -107,20 +107,20 @@
 - (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     [super touchesEnded:touches withEvent:event];
-    if (![self isPointInView:[touches.anyObject locationInView:self] view:self]) {
+    if (![self isPointInView:[touches.anyObject locationInView:self] view:self] || self.animating == NO) {
         [self endAnimation];
     }
 }
 
 - (void)endAnimation
 {
-    self.isAnimationStop = YES;
     self.circleLayer.opacity = 0.0;
     self.circleLayer.transform = CATransform3DIdentity;
 }
 
 - (void)enlargeFromPoint:(CGPoint)point
 {
+    self.animating = YES;
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
     self.circleLayer.opacity = self.layerOpaque;
@@ -143,7 +143,7 @@
 #pragma mark - calayer delegate
 - (void)animationDidStop:(CAAnimation *)anim finished:(BOOL)flag
 {
-    self.isAnimationStop = YES;
+    self.animating = NO;
     if (!self.isTouchInside) {
         [self endAnimation];
     }
