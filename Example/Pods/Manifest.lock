@@ -1,0 +1,14 @@
+PODS:
+  - MZGoogleStyleButton (0.1.0)
+
+DEPENDENCIES:
+  - MZGoogleStyleButton (from `../`)
+
+EXTERNAL SOURCES:
+  MZGoogleStyleButton:
+    :path: ../
+
+SPEC CHECKSUMS:
+  MZGoogleStyleButton: 4c64e75747df43a61a1842271ef52f5a29991c85
+
+COCOAPODS: 0.39.0
