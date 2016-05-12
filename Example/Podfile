@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'MZGoogleStyleButton_Example' do
+  pod 'MZGoogleStyleButton', :path => '../'
+
+  target 'MZGoogleStyleButton_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
